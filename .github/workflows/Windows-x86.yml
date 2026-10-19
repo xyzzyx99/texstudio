@@ -1,4 +1,4 @@
-name: CD
+name: Windows-x86
 on:
   push:
   pull_request:
