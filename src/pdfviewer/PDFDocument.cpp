@@ -1953,7 +1953,9 @@ void PDFWidget::updateCursor()
 				setCursor(*zoomInCursor);
 		}
 		else
-			setCursor(*magnifierCursor);
+			// Left-drag pans the page even in magnifier mode: show an open hand
+			// when idle; mousePressEvent switches to a closed hand while dragging.
+			setCursor(Qt::OpenHandCursor);
 	}
 	break;
 	case kSelectText:
