@@ -1182,6 +1182,13 @@ void PDFWidget::mousePressEvent(QMouseEvent *event)
 	}
 
 	mouseDownModifiers = event->modifiers();
+	// Shift+left-click zooms out, independently of the active PDF tool.
+	// Handle it before text selection, links and hand dragging.
+	if (currentTool != kPresentation && mouseDownModifiers == Qt::ShiftModifier) {
+		setCursor(*zoomOutCursor);
+		event->accept();
+		return;
+	}
     // handle text selection
     if (currentTool == kSelectText) {
         if ((mouseDownModifiers & Qt::ControlModifier) && !(mouseDownModifiers & Qt::ShiftModifier)) {
@@ -1335,6 +1342,17 @@ void PDFWidget::getPosFromClick(const QPoint &p){
 
 void PDFWidget::mouseReleaseEvent(QMouseEvent *event)
 {
+	if (event->button() == Qt::LeftButton &&
+	    mouseDownModifiers == Qt::ShiftModifier && currentTool != kPresentation) {
+		// Only act if Shift is still held on release.
+		if (event->modifiers() & Qt::ShiftModifier)
+			doZoom(event->pos(), -1);
+		mouseDownModifiers = Qt::NoModifier;
+		usingTool = kNone;
+		updateCursor(event->pos());
+		event->accept();
+		return;
+	}
 	if (event->button() == Qt::RightButton) {
 		rightButtonHeld = false;
 		rightHoldTimer->stop();
@@ -1559,6 +1577,12 @@ void PDFWidget::mouseDoubleClickEvent(QMouseEvent *event)
 
 void PDFWidget::mouseMoveEvent(QMouseEvent *event)
 {
+	if ((event->buttons() & Qt::LeftButton) &&
+	    mouseDownModifiers == Qt::ShiftModifier && currentTool != kPresentation) {
+		setCursor(*zoomOutCursor);
+		event->accept();
+		return;
+	}
 	updateCursor(event->pos());
 	switch (usingTool) {
 	case kMagnifier: case kLaserPointer: {
