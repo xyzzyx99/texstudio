@@ -348,9 +348,8 @@ private:
 	autoScaleOption scaleOption;
 
 	bool inhibitNextContextMenuEvent;
-	QTimer *rightClickMenuTimer;
-	QPoint pendingMenuLocalPos;
-	QPoint pendingMenuGlobalPos;
+	QTimer *rightHoldTimer;
+	bool rightButtonHeld;
 	bool suppressRightContextMenu;
     double summedWheelDegrees;
 

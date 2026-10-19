@@ -732,7 +732,8 @@ PDFWidget::PDFWidget(bool embedded)
 	, dpi(72.0)
 	, scaleOption(kFixedMag)
 	, inhibitNextContextMenuEvent(false)
-	, rightClickMenuTimer(nullptr)
+	, rightHoldTimer(nullptr)
+	, rightButtonHeld(false)
 	, suppressRightContextMenu(false)
 	, summedWheelDegrees(0)
 	, docPages(0)
@@ -761,10 +762,19 @@ PDFWidget::PDFWidget(bool embedded)
 {
 	Q_ASSERT(globalConfig);
 	if (!globalConfig) return;
-	rightClickMenuTimer = new QTimer(this);
-	rightClickMenuTimer->setSingleShot(true);
-	connect(rightClickMenuTimer, &QTimer::timeout, this, [this]() {
-		showPdfContextMenu(pendingMenuLocalPos, pendingMenuGlobalPos);
+	rightHoldTimer = new QTimer(this);
+	rightHoldTimer->setSingleShot(true);
+	connect(rightHoldTimer, &QTimer::timeout, this, [this]() {
+		if (!rightButtonHeld || !(QApplication::mouseButtons() & Qt::RightButton)) return;
+		const QPoint globalPos = QCursor::pos();
+		const QPoint localPos = mapFromGlobal(globalPos);
+		if (!rect().contains(localPos)) return;
+		suppressRightContextMenu = true;
+		clickedLink.clear();
+		clickedAnnotation.clear();
+		QMouseEvent magnifierEvent(QEvent::MouseMove, localPos, globalPos,
+			Qt::RightButton, Qt::RightButton, QApplication::keyboardModifiers());
+		useMagnifier(&magnifierEvent);
 	});
 
 #ifdef MEDIAPLAYER
@@ -1124,9 +1134,8 @@ void PDFWidget::useDraggableTool(PDFDraggableTool* tool, const QMouseEvent *inEv
 }
 
 // PDF mouse controls: double-left-click synchronizes to LaTeX source;
-// left-drag pans; right-click opens the original context menu after the
-// system double-click interval; double-right-click opens the magnifier.
-// The right-click delay does not affect scrolling or rendering.
+// left-drag pans; short right-click opens the original context menu on release;
+// holding the right button for 350 ms opens the magnifier until release.
 
 static QPoint scrollClickPos;
 static Qt::KeyboardModifiers mouseDownModifiers;
@@ -1141,6 +1150,9 @@ void PDFWidget::mousePressEvent(QMouseEvent *event)
 		break; // all cases handled below
 	case Qt::RightButton:
 		suppressRightContextMenu = false;
+		rightButtonHeld = true;
+		if (event->modifiers() == Qt::NoModifier && currentTool != kPresentation)
+			rightHoldTimer->start(350);
 		event->accept();
 		return;
 	case Qt::MiddleButton:
@@ -1323,6 +1335,10 @@ void PDFWidget::getPosFromClick(const QPoint &p){
 
 void PDFWidget::mouseReleaseEvent(QMouseEvent *event)
 {
+	if (event->button() == Qt::RightButton) {
+		rightButtonHeld = false;
+		rightHoldTimer->stop();
+	}
 	if (pdfdocument && pdfdocument->embeddedMode)
 		setFocus();
 	if (pageHistoryIndex != pageHistory.size() - 1) {
@@ -1524,12 +1540,9 @@ void PDFWidget::mouseDoubleClickEvent(QMouseEvent *event)
 		QWidget::mouseDoubleClickEvent(event);
 		return;
 	}
-	if (event->button() == Qt::RightButton && event->modifiers() == Qt::NoModifier) {
-		rightClickMenuTimer->stop();
-		suppressRightContextMenu = true;
-		clickedLink.clear();
-		clickedAnnotation.clear();
-		useMagnifier(event);
+	if (event->button() == Qt::RightButton) {
+		// A double-right-click is not a special command. The hold timer
+		// handles magnification; preserve the normal short-click menu.
 		event->accept();
 		return;
 	}
@@ -1651,9 +1664,8 @@ void PDFWidget::contextMenuEvent(QContextMenuEvent *event)
 		return;
 	}
 	if (event->reason() == QContextMenuEvent::Mouse) {
-		pendingMenuLocalPos = event->pos();
-		pendingMenuGlobalPos = event->globalPos();
-		rightClickMenuTimer->start(QApplication::doubleClickInterval());
+		// Windows sends this on right-button release. No post-release delay.
+		showPdfContextMenu(event->pos(), event->globalPos());
 		event->accept();
 		return;
 	}
