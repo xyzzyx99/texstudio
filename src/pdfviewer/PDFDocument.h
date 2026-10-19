@@ -174,6 +174,7 @@ struct PDFPageHistoryItem{
 };
 
 class PDFScrollArea;
+class QTimer;
 class PDFWidget : public QLabel
 {
 	Q_OBJECT
@@ -313,6 +314,7 @@ private:
 	void updateCursor(const QPoint &pos);
 	QRect mapPopplerRectToWidget(QRectF rect, const QSizeF &pageSize) const;
 	void useMagnifier(const QMouseEvent *inEvent);
+	void showPdfContextMenu(const QPoint &localPos, const QPoint &globalPos);
 	void useLaserPointer(const QMouseEvent *inEvent);
 	void useDraggableTool(PDFDraggableTool* tool, const QMouseEvent *inEvent);
 	void goToDestination(const Poppler::LinkDestination &dest);
@@ -346,6 +348,10 @@ private:
 	autoScaleOption scaleOption;
 
 	bool inhibitNextContextMenuEvent;
+	QTimer *rightClickMenuTimer;
+	QPoint pendingMenuLocalPos;
+	QPoint pendingMenuGlobalPos;
+	bool suppressRightContextMenu;
     double summedWheelDegrees;
 
 	int docPages;

@@ -28,6 +28,7 @@
 #include <QRegion>
 #include <QUrl>
 #include <QShortcut>
+#include <QTimer>
 #include <QtCore/qnumeric.h>
 #include <QtCore/qmath.h>
 #if QT_VERSION<QT_VERSION_CHECK(5,15,0)
@@ -731,6 +732,8 @@ PDFWidget::PDFWidget(bool embedded)
 	, dpi(72.0)
 	, scaleOption(kFixedMag)
 	, inhibitNextContextMenuEvent(false)
+	, rightClickMenuTimer(nullptr)
+	, suppressRightContextMenu(false)
 	, summedWheelDegrees(0)
 	, docPages(0)
 	, saveScaleFactor(1.0)
@@ -758,6 +761,11 @@ PDFWidget::PDFWidget(bool embedded)
 {
 	Q_ASSERT(globalConfig);
 	if (!globalConfig) return;
+	rightClickMenuTimer = new QTimer(this);
+	rightClickMenuTimer->setSingleShot(true);
+	connect(rightClickMenuTimer, &QTimer::timeout, this, [this]() {
+		showPdfContextMenu(pendingMenuLocalPos, pendingMenuGlobalPos);
+	});
 
 #ifdef MEDIAPLAYER
 	movie = nullptr;
@@ -1115,28 +1123,10 @@ void PDFWidget::useDraggableTool(PDFDraggableTool* tool, const QMouseEvent *inEv
 	QCoreApplication::postEvent(this, event);
 }
 
-// Mouse control for the various tools:
-// * magnifier
-//   - double-click to sync
-//   - click to use magnifier (custom magnifier cursor)
-//   - shift-click to zoom in (custom plus sign cursor)
-//   - alt-click to zoom out (custom minus sign cursor)
-//   - ctrl+shift-click to copy position to clipboard (CrossCursor)
-//   - shift-click and drag to zoom to selected area
-// * scroll (hand)
-//   - double-click to sync
-//   - shift-click to set pageOffset to gridColumn (ArrowCursor)
-//   - click and drag to scroll	(ClosedHandCursor)
-//   - ctrl+shift-click to copy position to clipboard (CrossCursor)
-//   - double-click to use magnifier
-// * select area (crosshair)
-//   - double-click to sync
-//   - click and drag to select area
-//   - double-click to use magnifier
-// * select text (I-beam)
-//   - double-click to sync
-//   - click and drag to select text
-//   - double-click to use magnifier
+// PDF mouse controls: double-left-click synchronizes to LaTeX source;
+// left-drag pans; right-click opens the original context menu after the
+// system double-click interval; double-right-click opens the magnifier.
+// The right-click delay does not affect scrolling or rendering.
 
 static QPoint scrollClickPos;
 static Qt::KeyboardModifiers mouseDownModifiers;
@@ -1149,6 +1139,10 @@ void PDFWidget::mousePressEvent(QMouseEvent *event)
 	switch (event->button()) {
 	case Qt::LeftButton:
 		break; // all cases handled below
+	case Qt::RightButton:
+		suppressRightContextMenu = false;
+		event->accept();
+		return;
 	case Qt::MiddleButton:
 		if (currentTool == kPresentation && !(event->modifiers() & (Qt::ShiftModifier | Qt::AltModifier))) {
 			useLaserPointer(event);
@@ -1242,12 +1236,6 @@ void PDFWidget::mousePressEvent(QMouseEvent *event)
 				if (!clickedLink && !clickedAnnotation) {
 					switch (currentTool) {
 					case kMagnifier:
-						if (mouseDownModifiers & (Qt::ShiftModifier | Qt::AltModifier))
-							; // do nothing - zoom in or out (on mouseUp)
-						else
-							useMagnifier(event);
-						break;
-
 					case kScroll:
 						setCursor(Qt::ClosedHandCursor);
 						scrollClickPos = event->globalPos();
@@ -1532,17 +1520,28 @@ void PDFWidget::doLink(const QSharedPointer<Poppler::Link> link)
 
 void PDFWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    if ((event->button() != Qt::LeftButton) || (currentTool == kPresentation)) {
+	if (currentTool == kPresentation) {
 		QWidget::mouseDoubleClickEvent(event);
 		return;
 	}
-    if (event->modifiers() == Qt::NoModifier) {
-        clickedLink.clear();
-        clickedAnnotation.clear();
-        usingTool = kNone;
-        syncWindowClick(event->pos(), true);
-    }
-    event->accept();
+	if (event->button() == Qt::RightButton && event->modifiers() == Qt::NoModifier) {
+		rightClickMenuTimer->stop();
+		suppressRightContextMenu = true;
+		clickedLink.clear();
+		clickedAnnotation.clear();
+		useMagnifier(event);
+		event->accept();
+		return;
+	}
+	if (event->button() == Qt::LeftButton && event->modifiers() == Qt::NoModifier) {
+		clickedLink.clear();
+		clickedAnnotation.clear();
+		usingTool = kNone;
+		syncWindowClick(event->pos(), true);
+		event->accept();
+		return;
+	}
+	QWidget::mouseDoubleClickEvent(event);
 }
 
 void PDFWidget::mouseMoveEvent(QMouseEvent *event)
@@ -1644,9 +1643,27 @@ void PDFWidget::contextMenuEvent(QContextMenuEvent *event)
 {
 	if (inhibitNextContextMenuEvent) {
 		inhibitNextContextMenuEvent = false;
+		event->accept();
 		return;
 	}
+	if (suppressRightContextMenu) {
+		event->accept();
+		return;
+	}
+	if (event->reason() == QContextMenuEvent::Mouse) {
+		pendingMenuLocalPos = event->pos();
+		pendingMenuGlobalPos = event->globalPos();
+		rightClickMenuTimer->start(QApplication::doubleClickInterval());
+		event->accept();
+		return;
+	}
+	// Keyboard-triggered context menus retain their original immediate behavior.
+	showPdfContextMenu(event->pos(), event->globalPos());
+	event->accept();
+}
 
+void PDFWidget::showPdfContextMenu(const QPoint &localPos, const QPoint &globalPos)
+{
 	QMenu	menu(this);
 
     // add copy if selection present
@@ -1660,7 +1677,7 @@ void PDFWidget::contextMenuEvent(QContextMenuEvent *event)
 	PDFDocument *pdfDoc = getPDFDocument();
 	if (pdfDoc && pdfDoc->hasSyncData()) {
 		QAction *act = new QAction(tr("Go to Source"), &menu);
-		act->setData(QVariant(event->pos()));
+		act->setData(QVariant(localPos));
 		connect(act, SIGNAL(triggered()), this, SLOT(jumpToSource()));
 		menu.addAction(act);
 		menu.addSeparator();
@@ -1685,14 +1702,14 @@ void PDFWidget::contextMenuEvent(QContextMenuEvent *event)
 		menu.addMenu(pdfDoc->menuShow);
 	}
 
-	QAction *action = menu.exec(event->globalPos());
+	QAction *action = menu.exec(globalPos);
 
 	if (action == ctxZoomInAction)
-		doZoom(event->pos(), 1);
+		doZoom(localPos, 1);
 	else if (action == ctxZoomOutAction)
-		doZoom(event->pos(), -1);
+		doZoom(localPos, -1);
     else if (pdfDoc && (action == pdfDoc->actionSetPageOffsetMenu))
-		setPageOffsetClick(event->pos());
+		setPageOffsetClick(localPos);
 }
 
 bool PDFWidget::event(QEvent *event)
