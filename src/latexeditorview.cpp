@@ -377,71 +377,52 @@ bool DefaultInputBinding::mousePressEvent(QMouseEvent *event, QEditor *editor)
 
 bool DefaultInputBinding::mouseReleaseEvent(QMouseEvent *event, QEditor *editor)
 {
-	if (isDoubleClick) {
-		isDoubleClick = false;
-		return false;
-	}
-	isDoubleClick = false;
-
-    if (event->modifiers() == Qt::ControlModifier && modifiersWhenPressed == event->modifiers() && event->button() == Qt::LeftButton) {
-		// Ctrl+LeftClick
-		int distanceSqr = (event->pos().x() - lastMousePressLeft.x()) * (event->pos().x() - lastMousePressLeft.x()) + (event->pos().y() - lastMousePressLeft.y()) * (event->pos().y() - lastMousePressLeft.y());
-		if (distanceSqr > 4) // allow the user to accidentially move the mouse a bit
-			return false;
-
-		LatexEditorView *edView = qobject_cast<LatexEditorView *>(editor->parentWidget()); //a qobject is necessary to retrieve events
-		if (!edView) return false;
-		QDocumentCursor cursor = editor->cursorForPosition(editor->mapToContents(event->pos()));
-
-		if (edView->hasLinkOverlay()) {
-			LinkOverlay lo = edView->getLinkOverlay();
-			switch (lo.type) {
-			case LinkOverlay::RefOverlay:
-				emit edView->gotoDefinition(cursor);
-				return true;
-			case LinkOverlay::FileOverlay:
-                emit edView->openFile(lo.m_link.isEmpty() ? lo.text() : lo.m_link);
-				return true;
-			case LinkOverlay::UrlOverlay:
-				if (!QDesktopServices::openUrl(lo.text())) {
-					UtilsUi::txsWarning(LatexEditorView::tr("Could not open url:") + "\n" + lo.text());
-				}
-				return true;
-			case LinkOverlay::UsepackageOverlay:
-				edView->openPackageDocumentation(lo.text());
-				return true;
-			case LinkOverlay::BibFileOverlay:
-                emit edView->openFile(lo.text(), "bib");
-				return true;
-			case LinkOverlay::CiteOverlay:
-				emit edView->gotoDefinition(cursor);
-				return true;
-			case LinkOverlay::CommandOverlay:
-				emit edView->gotoDefinition(cursor);
-				return true;
-			case LinkOverlay::EnvOverlay:
-				emit edView->gotoDefinition(cursor);
-				return true;
-			case LinkOverlay::Invalid:
-				break;
-			}
-		}
-
-		if (!editor->languageDefinition()) return false;
-		if (editor->languageDefinition()->language() != "(La)TeX")
-			return false;
-		emit edView->syncPDFRequested(cursor);
-		return true;
-	}
-	return false;
+    Q_UNUSED(event)
+    Q_UNUSED(editor)
+    if (isDoubleClick) isDoubleClick = false;
+    return false;
 }
 
 bool DefaultInputBinding::mouseDoubleClickEvent(QMouseEvent *event, QEditor *editor)
 {
-	Q_UNUSED(event)
-	Q_UNUSED(editor)
-	isDoubleClick = true;
-	return false;
+    isDoubleClick = true;
+    if (event->button() != Qt::LeftButton || event->modifiers() != Qt::NoModifier)
+        return false;
+
+    LatexEditorView *edView = qobject_cast<LatexEditorView *>(editor->parentWidget());
+    if (!edView) return false;
+    QDocumentCursor cursor = editor->cursorForPosition(editor->mapToContents(event->pos()));
+    edView->checkForLinkOverlay(cursor);
+    if (edView->hasLinkOverlay()) {
+        LinkOverlay lo = edView->getLinkOverlay();
+        switch (lo.type) {
+        case LinkOverlay::RefOverlay:
+        case LinkOverlay::CiteOverlay:
+        case LinkOverlay::CommandOverlay:
+        case LinkOverlay::EnvOverlay:
+            emit edView->gotoDefinition(cursor);
+            return true;
+        case LinkOverlay::FileOverlay:
+            emit edView->openFile(lo.m_link.isEmpty() ? lo.text() : lo.m_link);
+            return true;
+        case LinkOverlay::UrlOverlay:
+            if (!QDesktopServices::openUrl(lo.text()))
+                UtilsUi::txsWarning(LatexEditorView::tr("Could not open url:") + "\n" + lo.text());
+            return true;
+        case LinkOverlay::UsepackageOverlay:
+            edView->openPackageDocumentation(lo.text());
+            return true;
+        case LinkOverlay::BibFileOverlay:
+            emit edView->openFile(lo.text(), "bib");
+            return true;
+        case LinkOverlay::Invalid:
+            break;
+        }
+    }
+    if (!editor->languageDefinition() || editor->languageDefinition()->language() != "(La)TeX")
+        return false;
+    emit edView->syncPDFRequested(cursor);
+    return true;
 }
 
 bool DefaultInputBinding::contextMenuEvent(QContextMenuEvent *event, QEditor *editor)

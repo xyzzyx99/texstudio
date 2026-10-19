@@ -1117,24 +1117,24 @@ void PDFWidget::useDraggableTool(PDFDraggableTool* tool, const QMouseEvent *inEv
 
 // Mouse control for the various tools:
 // * magnifier
-//   - ctrl-click to sync
+//   - double-click to sync
 //   - click to use magnifier (custom magnifier cursor)
 //   - shift-click to zoom in (custom plus sign cursor)
 //   - alt-click to zoom out (custom minus sign cursor)
 //   - ctrl+shift-click to copy position to clipboard (CrossCursor)
 //   - shift-click and drag to zoom to selected area
 // * scroll (hand)
-//   - ctrl-click to sync
+//   - double-click to sync
 //   - shift-click to set pageOffset to gridColumn (ArrowCursor)
 //   - click and drag to scroll	(ClosedHandCursor)
 //   - ctrl+shift-click to copy position to clipboard (CrossCursor)
 //   - double-click to use magnifier
 // * select area (crosshair)
-//   - ctrl-click to sync
+//   - double-click to sync
 //   - click and drag to select area
 //   - double-click to use magnifier
 // * select text (I-beam)
-//   - ctrl-click to sync
+//   - double-click to sync
 //   - click and drag to select text
 //   - double-click to use magnifier
 
@@ -1373,12 +1373,7 @@ void PDFWidget::mouseReleaseEvent(QMouseEvent *event)
 				}
 				break;
 			}
-			// Ctrl-click to sync
-			if (mouseDownModifiers & Qt::ControlModifier) {
-				if (event->modifiers() & Qt::ControlModifier)
-					syncWindowClick(event->pos(), true);
-				break;
-			}
+
 			// Shift-click (in scroll mode) on page or grid to set pageOffset to gridColumn
 			if ((currentTool == kScroll) && (mouseDownModifiers & Qt::ShiftModifier)) {
 				if (event->modifiers() & Qt::ShiftModifier) {
@@ -1541,9 +1536,13 @@ void PDFWidget::mouseDoubleClickEvent(QMouseEvent *event)
 		QWidget::mouseDoubleClickEvent(event);
 		return;
 	}
-	if (!(mouseDownModifiers & Qt::ControlModifier))
-		useMagnifier(event);
-	event->accept();
+    if (event->modifiers() == Qt::NoModifier) {
+        clickedLink.clear();
+        clickedAnnotation.clear();
+        usingTool = kNone;
+        syncWindowClick(event->pos(), true);
+    }
+    event->accept();
 }
 
 void PDFWidget::mouseMoveEvent(QMouseEvent *event)
