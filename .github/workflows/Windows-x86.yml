@@ -1,7 +1,6 @@
-name: Windows-x86
+name: Windows x64 build
+
 on:
-  push:
-  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -15,7 +14,7 @@ jobs:
   build-win10:
     name: win10 build (msys2)
     if: github.event_name != 'pull_request'
-    runs-on: windows-latest
+    runs-on: windows-2025
     defaults:
       run:
         shell: msys2 {0}
@@ -168,7 +167,7 @@ jobs:
 
       - name: Upload signed installer to GitHub Artifacts
         id: upload-artifact-signed
-        if: env.IF_CODESIGN == 'true' && github.event_name ?= 'pull_request'
+        if: env.IF_CODESIGN == 'true' && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v7
         with:
           name: texstudio-win-qt6-signed-exe
@@ -185,38 +184,3 @@ jobs:
                 || '' }}
             texstudio-${{ steps.package.outputs.GIT_VERSION }}-win-portable-qt6.zip
 
-  ###################################
-
-  release:
-    permissions:
-      actions: write # for GeekyEggo/delete-artifact to delete artifacts
-      contents: write # for softprops/action-gh-release to create GitHub release
-    name: Release
-    needs: [build-win10]
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - name: Download temp artifacts
-        uses: actions/download-artifact@v8
-        with:
-          pattern: release-*
-          merge-multiple: true
-
-      - name: Calculate hashes
-        run: |
-          echo --SHA1SUM-- > hashes.txt
-          sha1sum * | grep -v hashes.txt >> hashes.txt
-          echo >> hashes.txt
-          echo --SHA256SUM-- >> hashes.txt
-          sha256sum * | grep -v hashes.txt >> hashes.txt
-
-      - name: Batch release
-        uses: softprops/action-gh-release@v3
-        with:
-          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
-          files: ./*
-
-      - name: Delete temp artifacts
-        uses: GeekyEggo/delete-artifact@v6
-        with:
-          name: release-*
