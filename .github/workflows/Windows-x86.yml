@@ -13,7 +13,7 @@ env:
 jobs:
   build-win10:
     name: win10 build (msys2)
-    if: github.event_name ?= 'pull_request'
+    if: github.event_name != 'pull_request'
     runs-on: windows-2025
     timeout-minutes: 20
     defaults:
