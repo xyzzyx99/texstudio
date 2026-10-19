@@ -1149,7 +1149,9 @@ void PDFWidget::mousePressEvent(QMouseEvent *event)
 	case Qt::LeftButton:
 		break; // all cases handled below
 	case Qt::RightButton:
-		suppressRightContextMenu = false;
+		// Shift+right-click zooms in, so never show a context menu for it.
+		// Ordinary right-clicks still open the menu on release.
+		suppressRightContextMenu = (event->modifiers() & Qt::ShiftModifier) != 0;
 		rightButtonHeld = true;
 		if (event->modifiers() == Qt::NoModifier && currentTool != kPresentation)
 			rightHoldTimer->start(350);
