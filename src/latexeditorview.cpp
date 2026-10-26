@@ -422,7 +422,8 @@ bool DefaultInputBinding::mouseDoubleClickEvent(QMouseEvent *event, QEditor *edi
     if (!editor->languageDefinition() || editor->languageDefinition()->language() != "(La)TeX")
         return false;
     emit edView->syncPDFRequested(cursor);
-    return true;
+    // Allow QEditor to select the word using its normal double-click handling.
+    return false;
 }
 
 bool DefaultInputBinding::contextMenuEvent(QContextMenuEvent *event, QEditor *editor)
