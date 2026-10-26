@@ -386,14 +386,16 @@ bool DefaultInputBinding::mouseReleaseEvent(QMouseEvent *event, QEditor *editor)
 bool DefaultInputBinding::mouseDoubleClickEvent(QMouseEvent *event, QEditor *editor)
 {
     isDoubleClick = true;
-    if (event->button() != Qt::LeftButton || event->modifiers() != Qt::NoModifier)
+    if (event->button() != Qt::LeftButton || (event->modifiers() != Qt::NoModifier && event->modifiers() != Qt::ControlModifier))
         return false;
 
     LatexEditorView *edView = qobject_cast<LatexEditorView *>(editor->parentWidget());
     if (!edView) return false;
     QDocumentCursor cursor = editor->cursorForPosition(editor->mapToContents(event->pos()));
-    edView->checkForLinkOverlay(cursor);
-    if (edView->hasLinkOverlay()) {
+    // Ctrl+double-click follows links; plain double-click selects and syncs.
+    if (event->modifiers() == Qt::ControlModifier)
+        edView->checkForLinkOverlay(cursor);
+    if (event->modifiers() == Qt::ControlModifier && edView->hasLinkOverlay()) {
         LinkOverlay lo = edView->getLinkOverlay();
         switch (lo.type) {
         case LinkOverlay::RefOverlay:
@@ -419,10 +421,10 @@ bool DefaultInputBinding::mouseDoubleClickEvent(QMouseEvent *event, QEditor *edi
             break;
         }
     }
-    if (!editor->languageDefinition() || editor->languageDefinition()->language() != "(La)TeX")
-        return false;
-    emit edView->syncPDFRequested(cursor);
-    // Allow QEditor to select the word using its normal double-click handling.
+    if (event->modifiers() == Qt::NoModifier && editor->languageDefinition() &&
+        editor->languageDefinition()->language() == "(La)TeX")
+        emit edView->syncPDFRequested(cursor);
+    // Let QEditor select WordOrCommandUnderCursor.
     return false;
 }
 
