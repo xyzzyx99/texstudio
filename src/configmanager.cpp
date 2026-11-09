@@ -738,6 +738,8 @@ ConfigManager::ConfigManager(QObject *parent): QObject (parent),
 	registerOption("GUI/Use System Theme", &useSystemTheme, true, &pseudoDialog->checkBoxUseSystemTheme);
 	registerOption("X11/Font Family", &interfaceFontFamily, interfaceFontFamily, &pseudoDialog->comboBoxInterfaceFont); //named X11 for backward compatibility
 	registerOption("X11/Font Size", &interfaceFontSize, QApplication::font().pointSize(), &pseudoDialog->spinBoxInterfaceFontSize);
+	registerOption("StructureView/Font Family", &structurePanelFontFamily, QApplication::font().family(), &pseudoDialog->comboBoxStructurePanelFont);
+	registerOption("StructureView/Font Size", &structurePanelFontSize, QApplication::font().pointSize(), &pseudoDialog->spinBoxStructurePanelFontSize);
 	registerOption("X11/Style", &interfaceStyle, interfaceStyle, &pseudoDialog->comboBoxInterfaceStyle);
 	registerOption("GUI/ToobarIconSize", &guiToolbarIconSize, 24);
 	registerOption("GUI/SymbolSize", &guiSymbolGridIconSize, 32);
@@ -1270,6 +1272,12 @@ QSettings *ConfigManager::readSettings(bool reread)
 	        || interfaceFontSize != QApplication::font().pointSize())
 		QApplication::setDesktopSettingsAware(false);
 #endif
+	// Keep the original interface appearance for profiles/settings created before
+	// the Structure-panel options were introduced. Afterwards the options are independent.
+	if (!config->contains("StructureView/Font Family") || structurePanelFontFamily.isEmpty())
+		structurePanelFontFamily = interfaceFontFamily;
+	if (!config->contains("StructureView/Font Size") || structurePanelFontSize <= 0)
+		structurePanelFontSize = interfaceFontSize;
 	QApplication::setFont(QFont(interfaceFontFamily, interfaceFontSize));
 
 #ifdef INTERNAL_TERMINAL

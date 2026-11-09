@@ -278,6 +278,43 @@
                     </property>
                    </widget>
                   </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="labelStructurePanelFont">
+                    <property name="text">
+                     <string>Structure Panel Font:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="1" colspan="3">
+                   <widget class="QFontComboBox" name="comboBoxStructurePanelFont">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="0">
+                   <widget class="QLabel" name="labelStructurePanelFontSize">
+                    <property name="text">
+                     <string>Structure Panel Font Size:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1" colspan="3">
+                   <widget class="QSpinBox" name="spinBoxStructurePanelFontSize">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimum">
+                     <number>1</number>
+                    </property>
+                   </widget>
+                  </item>
                   <item row="4" column="1" colspan="3">
                    <layout class="QHBoxLayout">
                     <property name="spacing">
@@ -5249,6 +5286,8 @@ Note: Changing this setting will only affect documents that are opened afterward
   <tabstop>checkBoxUseSystemTheme</tabstop>
   <tabstop>comboBoxInterfaceFont</tabstop>
   <tabstop>spinBoxInterfaceFontSize</tabstop>
+  <tabstop>comboBoxStructurePanelFont</tabstop>
+  <tabstop>spinBoxStructurePanelFontSize</tabstop>
   <tabstop>comboBoxLanguage</tabstop>
   <tabstop>spinBoxMaxRecentFiles</tabstop>
   <tabstop>spinBoxMaxRecentProjects</tabstop>

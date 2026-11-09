@@ -159,6 +159,7 @@ Texstudio::Texstudio(QWidget *parent, Qt::WindowFlags flags, QSplashScreen *spla
 	editors = nullptr;
 	m_languages = nullptr; //initial state to avoid crash on OSX
     currentSection=nullptr;
+    structureTreeWidget = nullptr; // readSettings() may apply the panel font.
 
 	readSettings();
 
@@ -208,7 +209,6 @@ Texstudio::Texstudio(QWidget *parent, Qt::WindowFlags flags, QSplashScreen *spla
 	setIconSize(QSize(iconSize, iconSize));
 
     m_toggleDocksAction = nullptr;
-    structureTreeWidget = nullptr;
     topTOCTreeWidget = nullptr;
 	outputView = nullptr;
 
@@ -681,6 +681,16 @@ void Texstudio::addMacrosAsTagList()
     }
 }
 
+/*! Apply the Structure panel font without changing the other dock widgets.
+ */
+void Texstudio::applyStructurePanelFont()
+{
+    if (!structureTreeWidget)
+        return;
+    QFont font(configManager.structurePanelFontFamily, configManager.structurePanelFontSize);
+    structureTreeWidget->setFont(font);
+}
+
 /*! set-up side- and bottom-panel
  */
 void Texstudio::setupDockWidgets()
@@ -717,6 +727,7 @@ void Texstudio::setupDockWidgets()
         structureTreeWidget->installEventFilter(this);
         structureDockWidget=addDock("structure", "structure_R90",tr("Structure"), structureTreeWidget);
     }
+    applyStructurePanelFont();
     if(!topTOCTreeWidget){
         topTOCTreeWidget = new QTreeWidget();
         connect(topTOCTreeWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(gotoLine(QTreeWidgetItem*,int)));
@@ -4900,6 +4911,8 @@ void Texstudio::readSettings(bool reread)
 
     documents.settingsRead();
 
+    // Loading a profile or rereading settings must also update an existing tree.
+    applyStructurePanelFont();
     configManager.editorConfig->settingsChanged();
 }
 
@@ -7731,6 +7744,7 @@ void Texstudio::generalOptions()
 
     if (configManager.execConfigDialog(parentWindow)) {
         QApplication::setOverrideCursor(Qt::WaitCursor);
+        applyStructurePanelFont();
 
         configManager.editorConfig->settingsChanged();
 
