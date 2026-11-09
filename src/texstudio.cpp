@@ -295,6 +295,7 @@ Texstudio::Texstudio(QWidget *parent, Qt::WindowFlags flags, QSplashScreen *spla
 	TxsTabWidget *rightEditors = new TxsTabWidget(this);
     rightEditors->setInterfaceStyle(configManager.interfaceStyle);
 	editors->addTabWidget(rightEditors);
+	applyEditorTabFont();
 
     connect(&documents, SIGNAL(docToHide(LatexEditorView*)), editors, SLOT(removeEditor(LatexEditorView*)));
 	connect(editors, SIGNAL(currentEditorChanged()), SLOT(currentEditorChanged()));
@@ -679,6 +680,18 @@ void Texstudio::addMacrosAsTagList()
     if(addToPanel){
         addDock("txs-macro","executeMacro_R90",tr("Macros"),list);
     }
+}
+
+/*! Apply the editor-tab caption font to both normal and split editor tabs.
+ *  Setting the QTabBar font does not change fonts in the document editors.
+ */
+void Texstudio::applyEditorTabFont()
+{
+    if (!editors)
+        return;
+    const QFont font(configManager.editorTabFontFamily, configManager.editorTabFontSize);
+    for (TxsTabWidget *tabs : editors->findChildren<TxsTabWidget *>())
+        tabs->setEditorTabFont(font);
 }
 
 /*! Apply the Structure panel font without changing the other dock widgets.
@@ -4911,7 +4924,8 @@ void Texstudio::readSettings(bool reread)
 
     documents.settingsRead();
 
-    // Loading a profile or rereading settings must also update an existing tree.
+    // Loading a profile or rereading settings must update existing tabs and tree.
+    applyEditorTabFont();
     applyStructurePanelFont();
     configManager.editorConfig->settingsChanged();
 }
@@ -7744,6 +7758,7 @@ void Texstudio::generalOptions()
 
     if (configManager.execConfigDialog(parentWindow)) {
         QApplication::setOverrideCursor(Qt::WaitCursor);
+        applyEditorTabFont();
         applyStructurePanelFont();
 
         configManager.editorConfig->settingsChanged();

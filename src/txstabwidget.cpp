@@ -30,6 +30,12 @@ TxsTabWidget::TxsTabWidget(QWidget *parent) :
 	connect(this, SIGNAL(currentChanged(int)), this, SIGNAL(currentEditorChanged()));
 }
 
+// Change the tab captions only: do not change QTabWidget or editor widget fonts.
+void TxsTabWidget::setEditorTabFont(const QFont &font)
+{
+    tabBar()->setFont(font);
+}
+
 void TxsTabWidget::moveTab(int from, int to)
 {
 	int cur = currentIndex();

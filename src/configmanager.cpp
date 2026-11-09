@@ -738,6 +738,8 @@ ConfigManager::ConfigManager(QObject *parent): QObject (parent),
 	registerOption("GUI/Use System Theme", &useSystemTheme, true, &pseudoDialog->checkBoxUseSystemTheme);
 	registerOption("X11/Font Family", &interfaceFontFamily, interfaceFontFamily, &pseudoDialog->comboBoxInterfaceFont); //named X11 for backward compatibility
 	registerOption("X11/Font Size", &interfaceFontSize, QApplication::font().pointSize(), &pseudoDialog->spinBoxInterfaceFontSize);
+	registerOption("EditorTabs/Font Family", &editorTabFontFamily, QApplication::font().family(), &pseudoDialog->comboBoxEditorTabFont);
+	registerOption("EditorTabs/Font Size", &editorTabFontSize, QApplication::font().pointSize(), &pseudoDialog->spinBoxEditorTabFontSize);
 	registerOption("StructureView/Font Family", &structurePanelFontFamily, QApplication::font().family(), &pseudoDialog->comboBoxStructurePanelFont);
 	registerOption("StructureView/Font Size", &structurePanelFontSize, QApplication::font().pointSize(), &pseudoDialog->spinBoxStructurePanelFontSize);
 	registerOption("X11/Style", &interfaceStyle, interfaceStyle, &pseudoDialog->comboBoxInterfaceStyle);
@@ -1272,6 +1274,12 @@ QSettings *ConfigManager::readSettings(bool reread)
 	        || interfaceFontSize != QApplication::font().pointSize())
 		QApplication::setDesktopSettingsAware(false);
 #endif
+	// Profiles/settings predating the editor-tab options inherit the interface font.
+	// Once saved, these values are independent of the editor text font and UI font.
+	if (!config->contains("EditorTabs/Font Family") || editorTabFontFamily.isEmpty())
+		editorTabFontFamily = interfaceFontFamily;
+	if (!config->contains("EditorTabs/Font Size") || editorTabFontSize <= 0)
+		editorTabFontSize = interfaceFontSize;
 	// Keep the original interface appearance for profiles/settings created before
 	// the Structure-panel options were introduced. Afterwards the options are independent.
 	if (!config->contains("StructureView/Font Family") || structurePanelFontFamily.isEmpty())

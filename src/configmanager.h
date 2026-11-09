@@ -90,6 +90,8 @@ public:
 	QPalette systemPalette;
 	QString interfaceStyle;
 	QString interfaceFontFamily;
+	QString editorTabFontFamily;
+	int editorTabFontSize;
 	QString structurePanelFontFamily;
 	int structurePanelFontSize;
 	int guiToolbarIconSize, guiSymbolGridIconSize;

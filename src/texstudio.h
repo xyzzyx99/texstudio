@@ -238,6 +238,7 @@ private:
 	Q_INVOKABLE QEditor *currentEditor() const;
 	Q_INVOKABLE bool isInternalFileExplorerDragSource(QObject *source) const;
 	void configureNewEditorView(LatexEditorView *edit);
+	void applyEditorTabFont();
 	void applyStructurePanelFont();
 	void configureNewEditorViewEnd(LatexEditorView *edit, bool asMaster = false, bool hidden = false);
 	LatexEditorView *getEditorViewFromFileName(const QString &fileName, bool checkTemporaryNames = false);

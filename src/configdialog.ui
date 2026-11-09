@@ -187,7 +187,7 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="10" column="1" colspan="3">
+                  <item row="12" column="1" colspan="3">
                    <widget class="QComboBox" name="comboBoxLanguage">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -220,7 +220,7 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="10" column="0">
+                  <item row="12" column="0">
                    <widget class="QLabel" name="label_9">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -279,14 +279,14 @@
                    </widget>
                   </item>
                   <item row="7" column="0">
-                   <widget class="QLabel" name="labelStructurePanelFont">
+                   <widget class="QLabel" name="labelEditorTabFont">
                     <property name="text">
-                     <string>Structure Panel Font:</string>
+                     <string>Editor Tab Font:</string>
                     </property>
                    </widget>
                   </item>
                   <item row="7" column="1" colspan="3">
-                   <widget class="QFontComboBox" name="comboBoxStructurePanelFont">
+                   <widget class="QFontComboBox" name="comboBoxEditorTabFont">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                       <horstretch>0</horstretch>
@@ -296,13 +296,50 @@
                    </widget>
                   </item>
                   <item row="8" column="0">
+                   <widget class="QLabel" name="labelEditorTabFontSize">
+                    <property name="text">
+                     <string>Editor Tab Font Size:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1" colspan="3">
+                   <widget class="QSpinBox" name="spinBoxEditorTabFontSize">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimum">
+                     <number>1</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="0">
+                   <widget class="QLabel" name="labelStructurePanelFont">
+                    <property name="text">
+                     <string>Structure Panel Font:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="9" column="1" colspan="3">
+                   <widget class="QFontComboBox" name="comboBoxStructurePanelFont">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="10" column="0">
                    <widget class="QLabel" name="labelStructurePanelFontSize">
                     <property name="text">
                      <string>Structure Panel Font Size:</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="8" column="1" colspan="3">
+                  <item row="10" column="1" colspan="3">
                    <widget class="QSpinBox" name="spinBoxStructurePanelFontSize">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -5286,6 +5323,8 @@ Note: Changing this setting will only affect documents that are opened afterward
   <tabstop>checkBoxUseSystemTheme</tabstop>
   <tabstop>comboBoxInterfaceFont</tabstop>
   <tabstop>spinBoxInterfaceFontSize</tabstop>
+  <tabstop>comboBoxEditorTabFont</tabstop>
+  <tabstop>spinBoxEditorTabFontSize</tabstop>
   <tabstop>comboBoxStructurePanelFont</tabstop>
   <tabstop>spinBoxStructurePanelFontSize</tabstop>
   <tabstop>comboBoxLanguage</tabstop>
