@@ -740,6 +740,7 @@ ConfigManager::ConfigManager(QObject *parent): QObject (parent),
 	registerOption("X11/Font Size", &interfaceFontSize, QApplication::font().pointSize(), &pseudoDialog->spinBoxInterfaceFontSize);
 	registerOption("EditorTabs/Font Family", &editorTabFontFamily, QApplication::font().family(), &pseudoDialog->comboBoxEditorTabFont);
 	registerOption("EditorTabs/Font Size", &editorTabFontSize, QApplication::font().pointSize(), &pseudoDialog->spinBoxEditorTabFontSize);
+	registerOption("EditorTabs/Active Tab Color", &editorTabActiveColor, QString(), &pseudoDialog->lineEditEditorTabActiveColor);
 	registerOption("StructureView/Font Family", &structurePanelFontFamily, QApplication::font().family(), &pseudoDialog->comboBoxStructurePanelFont);
 	registerOption("StructureView/Font Size", &structurePanelFontSize, QApplication::font().pointSize(), &pseudoDialog->spinBoxStructurePanelFontSize);
 	registerOption("X11/Style", &interfaceStyle, interfaceStyle, &pseudoDialog->comboBoxInterfaceStyle);

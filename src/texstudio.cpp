@@ -690,8 +690,10 @@ void Texstudio::applyEditorTabFont()
     if (!editors)
         return;
     const QFont font(configManager.editorTabFontFamily, configManager.editorTabFontSize);
-    for (TxsTabWidget *tabs : editors->findChildren<TxsTabWidget *>())
+    for (TxsTabWidget *tabs : editors->findChildren<TxsTabWidget *>()) {
         tabs->setEditorTabFont(font);
+        tabs->setActiveTabColor(configManager.editorTabActiveColor);
+    }
 }
 
 /*! Apply the Structure panel font without changing the other dock widgets.

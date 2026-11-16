@@ -92,6 +92,7 @@ public:
 	QString interfaceFontFamily;
 	QString editorTabFontFamily;
 	int editorTabFontSize;
+	QString editorTabActiveColor; // Empty means use the current Qt theme's tab color.
 	QString structurePanelFontFamily;
 	int structurePanelFontSize;
 	int guiToolbarIconSize, guiSymbolGridIconSize;

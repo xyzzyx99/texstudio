@@ -33,6 +33,7 @@
 #include "filedialog.h"
 
 #include <QJsonDocument>
+#include <QColorDialog>
 
 const QString ShortcutDelegate::addRowButton = "<internal: add row>";
 const QString ShortcutDelegate::deleteRowButton = "<internal: delete row>";
@@ -442,6 +443,19 @@ ConfigDialog::ConfigDialog(QWidget *parent): QDialog(parent,Qt::Dialog|Qt::Windo
 	//ui.contentsWidget->setMovement(QListView::Static);
 
 	//pageGeneral
+	// Color picker for the active editor tab (not the editor's background).
+	// An empty text box restores the platform/theme-provided color.
+	connect(ui.pushButtonEditorTabActiveColor, &QPushButton::clicked, this, [this]() {
+		QColor initial(ui.lineEditEditorTabActiveColor->text().trimmed());
+		if (!initial.isValid())
+			initial = palette().color(QPalette::Highlight);
+		const QColor chosen = QColorDialog::getColor(initial, this, tr("Active Editor Tab Color"));
+		if (chosen.isValid())
+			ui.lineEditEditorTabActiveColor->setText(chosen.name(QColor::HexRgb));
+	});
+	connect(ui.pushButtonEditorTabActiveColorDefault, &QPushButton::clicked, this, [this]() {
+		ui.lineEditEditorTabActiveColor->clear();
+	});
 	connect(ui.pushButtonImportDictionary, SIGNAL(clicked()), this, SLOT(importDictionary()));
 	connect(ui.pushButtonUpdateCheckNow, SIGNAL(clicked()), this, SLOT(updateCheckNow()));
 	connect(UpdateChecker::instance(), SIGNAL(checkCompleted()), this, SLOT(refreshLastUpdateTime()));

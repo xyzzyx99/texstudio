@@ -1,4 +1,5 @@
 #include "txstabwidget.h"
+#include <QColor>
 #include <QWheelEvent>
 #include "latexeditorview.h"
 #include "latexdocument.h"
@@ -35,6 +36,16 @@ TxsTabWidget::TxsTabWidget(QWidget *parent) :
 void TxsTabWidget::setEditorTabFont(const QFont &font)
 {
     tabBar()->setFont(font);
+}
+
+// Only change the background of the currently selected editor tab.
+// An empty or invalid value preserves the native application theme.
+void TxsTabWidget::setActiveTabColor(const QString &color)
+{
+    if (m_activeTabColor == color)
+        return;
+    m_activeTabColor = color;
+    updateStyle();
 }
 
 void TxsTabWidget::moveTab(int from, int to)
@@ -128,8 +139,19 @@ void TxsTabWidget::updateStyle()
     }
 #endif
     if (m_active) {
-        setStyleSheet(baseStyle);// + " QTabBar {font-weight: bold;} QTabBar::tab:!selected {font-weight: normal;}");
+        // Apply the user color to the selected TAB only, not QTabWidget::pane
+        // or the document editor. No extra rule when using the theme default.
+        const QColor selectedColor(m_activeTabColor.trimmed());
+        if (selectedColor.isValid()) {
+            // Ensure the caption stays readable on light and dark custom colors.
+            const QString textColor = qGray(selectedColor.rgb()) < 140
+                    ? QStringLiteral("#ffffff") : QStringLiteral("#000000");
+            baseStyle += QStringLiteral(" QTabBar::tab:selected { background-color: %1; color: %2; }")
+                    .arg(selectedColor.name(QColor::HexRgb), textColor);
+        }
+        setStyleSheet(baseStyle);
     } else {
+        // In split-editor mode, do not highlight the inactive group's tab.
         setStyleSheet(baseStyle + " QTabBar {color: darkgrey;}");
     }
 }

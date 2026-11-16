@@ -21,6 +21,7 @@ public:
 	LatexEditorView *editorAt(QPoint p);
 	void setActive(bool active);
 	void setEditorTabFont(const QFont &font);
+	void setActiveTabColor(const QString &color);
     void updateStyle();
 
 	bool isEmpty() const;
@@ -62,6 +63,7 @@ private slots:
 private:
 	bool m_active;
     QString interfaceStyle;
+	QString m_activeTabColor;
 };
 Q_DECLARE_METATYPE(TxsTabWidget *)
 
