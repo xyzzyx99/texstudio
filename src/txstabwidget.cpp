@@ -1,4 +1,5 @@
 #include "txstabwidget.h"
+#include <QWheelEvent>
 #include "latexeditorview.h"
 #include "latexdocument.h"
 #include "smallUsefulFunctions.h"
@@ -342,4 +343,57 @@ void ChangeAwareTabBar::mousePressEvent(QMouseEvent *event)
 	if (event->button() == Qt::LeftButton) {
 		emit tabLeftClicked();
 	}
+}
+
+// Move the tab strip with the mouse wheel, without changing the active editor.
+// QTabBar's normal wheelEvent() switches the current tab; the built-in scroll
+// arrow buttons instead move the visible tab range without selecting a file.
+void ChangeAwareTabBar::wheelEvent(QWheelEvent *event)
+{
+    const QPoint angle = event->angleDelta();
+    const int angularDelta = qAbs(angle.x()) > qAbs(angle.y()) ? angle.x() : angle.y();
+    int steps = 0;
+
+    if (angularDelta != 0) {
+        // Preserve partial wheel notches, including high-resolution mouse wheels.
+        m_wheelPixelRemainder = 0;
+        m_wheelAngleRemainder += angularDelta;
+        steps = m_wheelAngleRemainder / 120;
+        m_wheelAngleRemainder %= 120;
+    } else {
+        // Touchpads can supply pixel deltas without an angular delta.
+        const QPoint pixels = event->pixelDelta();
+        const int pixelDelta = qAbs(pixels.x()) > qAbs(pixels.y()) ? pixels.x() : pixels.y();
+        if (pixelDelta != 0) {
+            m_wheelAngleRemainder = 0;
+            m_wheelPixelRemainder += pixelDelta;
+            steps = m_wheelPixelRemainder / 40;
+            m_wheelPixelRemainder %= 40;
+        }
+    }
+
+    if (steps != 0) {
+        QToolButton *left = findChild<QToolButton *>(QStringLiteral("ScrollLeftButton"));
+        QToolButton *right = findChild<QToolButton *>(QStringLiteral("ScrollRightButton"));
+
+        // Qt 5 creates the same two buttons, but leaves their object names empty.
+        // They are the first two direct QToolButton children, in left/right order.
+        if (!left || !right) {
+            const QList<QToolButton *> buttons =
+                findChildren<QToolButton *>(QString(), Qt::FindDirectChildrenOnly);
+            if (buttons.size() >= 2) {
+                left = buttons.at(0);
+                right = buttons.at(1);
+            }
+        }
+
+        QToolButton *button = steps > 0 ? left : right;
+        for (int i = 0; button && i < qAbs(steps); ++i) {
+            if (!button->isVisible() || !button->isEnabled())
+                break; // No overflow, or already at the end of the tab strip.
+            button->click(); // Scroll tabs; never call setCurrentIndex().
+        }
+    }
+
+    event->accept(); // Do not allow Qt to switch documents via this wheel event.
 }

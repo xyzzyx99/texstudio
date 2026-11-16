@@ -78,6 +78,11 @@ signals:
 
 protected:
 	virtual void mousePressEvent(QMouseEvent *event);
+	virtual void wheelEvent(QWheelEvent *event) override;
+
+private:
+	int m_wheelAngleRemainder = 0;
+	int m_wheelPixelRemainder = 0;
 };
 
 #endif // TXSTABWIDGET_H
