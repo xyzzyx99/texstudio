@@ -93,6 +93,7 @@ public:
 	QString editorTabFontFamily;
 	int editorTabFontSize;
 	QString editorTabActiveColor; // Empty means use the current Qt theme's tab color.
+	bool editorTabActiveColorOnHover; // If true, highlight only when hovering over the tab bar.
 	QString structurePanelFontFamily;
 	int structurePanelFontSize;
 	int guiToolbarIconSize, guiSymbolGridIconSize;

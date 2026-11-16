@@ -348,6 +348,16 @@
                       </property>
                      </widget>
                     </item>
+                    <item>
+                     <widget class="QCheckBox" name="checkBoxEditorTabActiveColorOnHover">
+                      <property name="text">
+                       <string>Show Active Tab in Color When Mouse Over</string>
+                      </property>
+                      <property name="toolTip">
+                       <string>Apply the chosen color to the active tab only while the pointer is over the editor tab bar. Unchecked means always show the color.</string>
+                      </property>
+                     </widget>
+                    </item>
                    </layout>
                   </item>
                   <item row="10" column="0">
@@ -5363,6 +5373,7 @@ Note: Changing this setting will only affect documents that are opened afterward
   <tabstop>lineEditEditorTabActiveColor</tabstop>
   <tabstop>pushButtonEditorTabActiveColor</tabstop>
   <tabstop>pushButtonEditorTabActiveColorDefault</tabstop>
+  <tabstop>checkBoxEditorTabActiveColorOnHover</tabstop>
   <tabstop>comboBoxStructurePanelFont</tabstop>
   <tabstop>spinBoxStructurePanelFontSize</tabstop>
   <tabstop>comboBoxLanguage</tabstop>

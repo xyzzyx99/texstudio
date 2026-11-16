@@ -1,5 +1,6 @@
 #include "txstabwidget.h"
 #include <QColor>
+#include <QEvent>
 #include <QWheelEvent>
 #include "latexeditorview.h"
 #include "latexdocument.h"
@@ -22,6 +23,8 @@ TxsTabWidget::TxsTabWidget(QWidget *parent) :
     //connect(tb, SIGNAL(middleMouseButtonPressed(int)), this, SLOT(tabCloseRequest(int)));
     connect(this, SIGNAL(tabCloseRequested(int)), this, SLOT(onTabCloseRequest(int)));
 	setTabBar(tb);
+	// Observe hover over the whole tab bar, not only over the selected tab.
+	tb->installEventFilter(this);
 
     setDocumentMode(true);
     const QTabBar *tb2 = tabBar();
@@ -46,6 +49,29 @@ void TxsTabWidget::setActiveTabColor(const QString &color)
         return;
     m_activeTabColor = color;
     updateStyle();
+}
+
+// Unchecked preserves the original always-colored selected tab behavior.
+void TxsTabWidget::setActiveTabColorOnHover(bool onlyWhenMouseOver)
+{
+    if (m_activeTabColorOnHover == onlyWhenMouseOver)
+        return;
+    m_activeTabColorOnHover = onlyWhenMouseOver;
+    updateStyle();
+}
+
+bool TxsTabWidget::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == tabBar() &&
+            (event->type() == QEvent::Enter || event->type() == QEvent::Leave)) {
+        const bool hovered = event->type() == QEvent::Enter;
+        if (m_tabBarHovered != hovered) {
+            m_tabBarHovered = hovered;
+            if (m_activeTabColorOnHover)
+                updateStyle();
+        }
+    }
+    return QTabWidget::eventFilter(watched, event);
 }
 
 void TxsTabWidget::moveTab(int from, int to)
@@ -142,7 +168,7 @@ void TxsTabWidget::updateStyle()
         // Apply the user color to the selected TAB only, not QTabWidget::pane
         // or the document editor. No extra rule when using the theme default.
         const QColor selectedColor(m_activeTabColor.trimmed());
-        if (selectedColor.isValid()) {
+        if (selectedColor.isValid() && (!m_activeTabColorOnHover || m_tabBarHovered)) {
             // Ensure the caption stays readable on light and dark custom colors.
             const QString textColor = qGray(selectedColor.rgb()) < 140
                     ? QStringLiteral("#ffffff") : QStringLiteral("#000000");

@@ -22,6 +22,7 @@ public:
 	void setActive(bool active);
 	void setEditorTabFont(const QFont &font);
 	void setActiveTabColor(const QString &color);
+	void setActiveTabColorOnHover(bool onlyWhenMouseOver);
     void updateStyle();
 
 	bool isEmpty() const;
@@ -49,6 +50,7 @@ public slots:
 	void removeEditor(LatexEditorView *edView);
 
 protected:
+	bool eventFilter(QObject *watched, QEvent *event) override;
 	LatexEditorView *editorAt(int index);
 	void connectEditor(LatexEditorView *edView);
 	void disconnectEditor(LatexEditorView *edView);
@@ -64,6 +66,8 @@ private:
 	bool m_active;
     QString interfaceStyle;
 	QString m_activeTabColor;
+	bool m_activeTabColorOnHover = false;
+	bool m_tabBarHovered = false;
 };
 Q_DECLARE_METATYPE(TxsTabWidget *)
 

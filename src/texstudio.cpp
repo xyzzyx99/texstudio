@@ -693,6 +693,7 @@ void Texstudio::applyEditorTabFont()
     for (TxsTabWidget *tabs : editors->findChildren<TxsTabWidget *>()) {
         tabs->setEditorTabFont(font);
         tabs->setActiveTabColor(configManager.editorTabActiveColor);
+        tabs->setActiveTabColorOnHover(configManager.editorTabActiveColorOnHover);
     }
 }
 
