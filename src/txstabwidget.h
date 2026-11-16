@@ -2,6 +2,7 @@
 #define Header_TxStab_Widget
 
 #include "mostQtHeaders.h"
+#include <QColor>
 
 class LatexEditorView;
 
@@ -76,6 +77,8 @@ class ChangeAwareTabBar : public QTabBar
 {
 	Q_OBJECT
 public:
+    void setHoverHighlightColor(const QColor &color);
+    void setBarHovered(bool hovered);
 
 signals:
 	void currentTabAboutToChange(int from, int to);
@@ -85,10 +88,13 @@ signals:
 protected:
 	virtual void mousePressEvent(QMouseEvent *event);
 	virtual void wheelEvent(QWheelEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
 
 private:
 	int m_wheelAngleRemainder = 0;
 	int m_wheelPixelRemainder = 0;
+    QColor m_hoverHighlightColor;
+    bool m_barHovered = false;
 };
 
 #endif // TXSTABWIDGET_H

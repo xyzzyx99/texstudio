@@ -1,6 +1,9 @@
 #include "txstabwidget.h"
 #include <QColor>
 #include <QEvent>
+#include <QPainter>
+#include <QStyle>
+#include <QStyleOptionTab>
 #include <QWheelEvent>
 #include "latexeditorview.h"
 #include "latexdocument.h"
@@ -67,8 +70,12 @@ bool TxsTabWidget::eventFilter(QObject *watched, QEvent *event)
         const bool hovered = event->type() == QEvent::Enter;
         if (m_tabBarHovered != hovered) {
             m_tabBarHovered = hovered;
-            if (m_activeTabColorOnHover)
-                updateStyle();
+            auto *bar = static_cast<ChangeAwareTabBar *>(tabBar());
+            bar->setBarHovered(hovered); // Repaint only; leave the scroll offset intact.
+            if (m_activeTabColorOnHover && hovered)
+                updateStyle(); // On entering, reveal the selected tab as before.
+            // Do NOT call updateStyle() on Leave: resetting the Qt stylesheet
+            // causes QTabBar to scroll the selected tab back into view.
         }
     }
     return QTabWidget::eventFilter(watched, event);
@@ -164,11 +171,16 @@ void TxsTabWidget::updateStyle()
         }
     }
 #endif
+    const QColor selectedColor(m_activeTabColor.trimmed());
+    auto *bar = static_cast<ChangeAwareTabBar *>(tabBar());
+    // In hover-only mode, paint the selected tab without resetting its stylesheet
+    // on mouse leave. QTabBar resets its scroll position during stylesheet changes.
+    bar->setHoverHighlightColor(m_active && m_activeTabColorOnHover
+                                ? selectedColor : QColor());
     if (m_active) {
         // Apply the user color to the selected TAB only, not QTabWidget::pane
         // or the document editor. No extra rule when using the theme default.
-        const QColor selectedColor(m_activeTabColor.trimmed());
-        if (selectedColor.isValid() && (!m_activeTabColorOnHover || m_tabBarHovered)) {
+        if (selectedColor.isValid() && !m_activeTabColorOnHover) {
             // Ensure the caption stays readable on light and dark custom colors.
             const QString textColor = qGray(selectedColor.rgb()) < 140
                     ? QStringLiteral("#ffffff") : QStringLiteral("#000000");
@@ -369,6 +381,52 @@ void TxsTabWidget::updateTabFromSender()
 			return;
 		}
 	}
+}
+
+// Repaint the selected tab's background without changing the QTabBar layout.
+// The parent's stylesheet is deliberately left alone on mouse leave so a tab
+// scrolled offscreen remains offscreen.
+void ChangeAwareTabBar::setHoverHighlightColor(const QColor &color)
+{
+    if (m_hoverHighlightColor == color)
+        return;
+    m_hoverHighlightColor = color;
+    update();
+}
+
+void ChangeAwareTabBar::setBarHovered(bool hovered)
+{
+    if (m_barHovered == hovered)
+        return;
+    m_barHovered = hovered;
+    update();
+}
+
+void ChangeAwareTabBar::paintEvent(QPaintEvent *event)
+{
+    QTabBar::paintEvent(event);
+    if (!m_barHovered || !m_hoverHighlightColor.isValid() || currentIndex() < 0)
+        return;
+
+    QStyleOptionTab option;
+    initStyleOption(&option, currentIndex());
+    const QRect selectedRect = option.rect.intersected(rect());
+    if (selectedRect.isEmpty())
+        return; // The selected tab is scrolled out of the visible bar.
+
+    QPainter painter(this);
+    painter.setClipRect(selectedRect);
+    // Keep the native tab border. The normal close button is a child widget
+    // and is not replaced by this paint operation.
+    painter.fillRect(selectedRect.adjusted(1, 1, -1, -1), m_hoverHighlightColor);
+
+    const QColor captionColor = qGray(m_hoverHighlightColor.rgb()) < 140
+                                ? QColor(Qt::white) : QColor(Qt::black);
+    option.palette.setColor(QPalette::WindowText, captionColor);
+    option.palette.setColor(QPalette::ButtonText, captionColor);
+    option.palette.setColor(QPalette::Text, captionColor);
+    painter.setPen(captionColor);
+    style()->drawControl(QStyle::CE_TabBarTabLabel, &option, &painter, this);
 }
 
 void ChangeAwareTabBar::mousePressEvent(QMouseEvent *event)
